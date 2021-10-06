@@ -29,13 +29,10 @@ jobs:
           steps:
             - run: npm install
             - run: npm test
+            - run: $ scp -r dist/. jeongho@http://3.37.177.80:8080/
 
 # build-and-test라는 workflow에는 build-and-test라는 Job을 가지고 있다는 의미입니다.
 workflows:
     build-and-test:
       jobs:
         - build-and-test 
-        - add_ssh_keys:	
-        fingerprints:	
-        - "b0:13:3c:e7:98:7a:0c:a1:78:9f:2f:e2:f0:92:c0:c6"	
-        - run: rsync -ah -e "ssh -o StrictHostKeyChecking=no" circleci-example.tar ec2-user@3.37.177.80:/home/ec2-user	
