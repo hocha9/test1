@@ -35,3 +35,8 @@ workflows:
     build-and-test:
       jobs:
         - build-and-test 
++   - add_ssh_keys:	
++       fingerprints:	
++         - "b0:13:3c:e7:98:7a:0c:a1:78:9f:2f:e2:f0:92:c0:c6"	
++   - run: rsync -ah -e "ssh -o StrictHostKeyChecking=no" circleci-example.tar username@server.address:/path/to/send	
++   - run: ssh username@server.address "cd /path/to/send; docker load -i circleci-example.tar; docker run circleci/example"	
