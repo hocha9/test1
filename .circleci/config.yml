@@ -37,7 +37,7 @@ jobs:
           key: v1-dependencies-{{ checksum "package.json" }}
         
       # run build
-      - run: yarn build # 여기에 해당하는 빌드 커맨드를 입력한다!
+      #- run: yarn build  여기에 해당하는 빌드 커맨드를 입력한다!
 
       - deploy:
           name: SSH File Transfer
