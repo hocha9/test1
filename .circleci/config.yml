@@ -1,55 +1,48 @@
-# CircleCI 2.1 버전을 사용한다는 의미입니다.
-# 각 버전에 따라 사용할 수 있는 속성이 다릅니다.
-version: 2.1
-
-# `node`라는 이름으로 `circleci/node@1.1.6` Orb를 사용한다는 의미입니다.
-orbs:
-  node: circleci/node@1.1.6
-
-# `build-and-test`라는 이름을 가진 Job의 속성을 나열합니다.
+# Javascript Node CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-javascript/ for more details
+#
+version: 2
 jobs:
-  build-and-test:
-    
+  build:
     docker:
-      - image: circleci/openjdk:8-jdk
-      
-    working_directory: ~/test
+      # specify the version you desire here
+      - image: circleci/node:8
 
-    # 이 Job의 executor는 node Orb의 default executor 입니다.
-    executor:
-      name: node/default
-    
-    # 이 Job에서 수행할 명령어 모음입니다.
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/mongo:3.4.4
+
+    working_directory: ~/test_v1
+
     steps:
+      # 빌드한 결과를 SSH를 활용하여 운영서버에 전송하기 위한 모듈 install
+      - run: sudo apt install -y rsync
 
-      # 이 프로젝트 코드를 executor에 다운로드 합니다.
       - checkout
 
-      # node Orb의 with-cache 명령어 입니다.
-      # node_modules 폴더를 package.json을 키로 가지는 캐시에 생성합니다.
-      - node/with-cache:
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
 
-          # 캐싱되어 있던 node_modules 폴더를 불러 온 후 실행할 명령어를 입력합니다.
-          # 이 steps가 끝난 후의 node_modules를 캐시에 저장합니다.
-          steps:
-            - run: mvn package
-            
-  deploy:
-    machine:
-      enabled: true
-    working_dirtory: ~/test
-    steps:
-      - run:
-        name: Deploy SSH
-        command: scp -r ~/test ec2-user@3.37.177.80:/home/ec2-user
+      - run: yarn
 
-# build-and-test라는 workflow에는 build-and-test라는 Job을 가지고 있다는 의미입니다.
-workflows:
-    version: 2
-    build-and-test:
-      jobs:
-        - build-and-test 
-        - deploy:
-          filters:
-            branches:
-              only: master
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+        
+      # run build
+      - run: yarn build # 여기에 해당하는 빌드 커맨드를 입력한다!
+
+      - deploy:
+          name: SSH File Transfer
+          # branch가 master라면 실행, 본인의 branch를 입력할것.
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+                ./deploy-test.sh
+            fi
